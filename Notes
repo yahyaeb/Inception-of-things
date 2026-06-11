@@ -1,0 +1,7 @@
+API Server: All nodes need to reach k3s server through port 6443 via TCP
+Flannel VXLAN: all sewrver and agent nodes need to be able to reach each other on port 8472 via UDP
+
+by default only root user can read the kubeconfig file gereated by K3s installation.
+
+To allow other users to connect to the cluster, we need to allow them to read the kubeconfig file located at /etc/rancher/k3s/k3s.yaml
+
