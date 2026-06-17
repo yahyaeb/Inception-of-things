@@ -1,4 +1,4 @@
-Vagrant.configure("2") do |config|
+Vagrant.configure("2") do |config| #API version, always "2"
 
   # Global settings go here
   config.vm.box = "debian/bookworm64" #current stable
@@ -14,6 +14,9 @@ Vagrant.configure("2") do |config|
     end
 
     server.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get upgrade -y
+      curl -sfL https://get.k3s.io | sh - 
       # Your server provisioning script goes here
     SHELL
   end
