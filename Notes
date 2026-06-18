@@ -3,5 +3,31 @@ Flannel VXLAN: all sewrver and agent nodes need to be able to reach each other o
 
 by default only root user can read the kubeconfig file gereated by K3s installation.
 
+they are both used, they serve completely different purposes:
+
+6443  → cluster management traffic
+        "join cluster, get instructions, report status"
+        Agent initiates → Server listens
+        Agent → connects TO server on port 6443
+8472  → pod network traffic  
+        "pod on server talking to pod on agent"
+        Both directions, both machines
+        Server ↔ Agent communication for Pod networking
+API Server (6443/TCP)
+
+This is the control plane communication
+How kubectl talks to the cluster
+How agents register and get instructions from the server
+Think of it as the management channel
+
+Flannel VXLAN (8472/UDP)
+
+This is the Pod-to-Pod network communication
+How Pods on different nodes talk to each other
+Think of it as the data channel
+
+
+----
+
 To allow other users to connect to the cluster, we need to allow them to read the kubeconfig file located at /etc/rancher/k3s/k3s.yaml
 
