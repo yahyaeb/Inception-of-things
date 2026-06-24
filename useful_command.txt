@@ -1,0 +1,33 @@
+1 - kubectl get <resource> — your "what's going on" command
+    sudo kubectl get nodes
+    sudo kubectl get pods
+    sudo kubectl get pods -A          # -A = all namespaces, not just default
+    sudo kubectl get pods -o wide     # adds IP, node, more detail
+    sudo kubectl get all              # shows pods, services, deployments, replicasets together
+
+2. kubectl describe <resource> <name> — when something's wrong and you need the why
+    sudo kubectl describe pod <pod-name>
+    sudo kubectl describe node yel-boukS
+
+3. kubectl logs <pod-name> — see what the app itself is actually saying
+    bashsudo kubectl logs <pod-name>
+    sudo kubectl logs <pod-name> -f       # -f = follow, like tail -f
+    sudo kubectl logs <pod-name> --previous  # logs from before a crash/restart
+
+4. kubectl apply -f <file>.yaml — how you actually create/update anything
+    bashsudo kubectl apply -f deployment.yaml
+
+5. kubectl exec -it <pod-name> -- <command> — get inside a running container
+    sudo kubectl exec -it <pod-name> -- bash
+    sudo kubectl exec -it <pod-name> -- curl localhost:80   # test from inside, no shell needed
+
+6. kubectl delete <resource> <name> — clean up / force a restart
+    bashsudo kubectl delete pod <pod-name>     # k3s will recreate it if it's managed by a Deployment
+    sudo kubectl delete -f deployment.yaml # delete everything defined in that file
+
+
+A couple of habits worth building alongside these:
+Tab completion saves real typing once resource names get long (nginx-test-6ff8854996-9tnml is not fun to type twice). If you're not already using it:
+bash  echo 'source <(kubectl completion bash)' >> ~/.bashrc
+watch pairs well with get, for exactly the kind of "is it done yet" loop you were doing manually earlier:
+bash  watch sudo kubectl get pods

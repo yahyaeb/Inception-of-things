@@ -1,0 +1,17 @@
+apiVersion: apps/v1        # which version of the Kubernetes API this resource type belongs to
+kind: Deployment           # what KIND of resource this is — Deployment, Service, Ingress, Pod, etc.
+metadata:
+  name: app2               # the name this Deployment will have inside the cluster
+spec:                      # everything under here is "how this Deployment should behave"
+  replicas: 3               # how many pod copies to keep alive
+  selector:
+    matchLabels:
+      app: app2             # how the Deployment finds/tracks "its" pods (must match the label below)
+  template:                 # the actual pod template — what each replica looks like
+    metadata:
+      labels:
+        app: app2            # this label gets stamped onto every pod this Deployment creates
+    spec:
+      containers:
+      - name: app2            # name of the container inside the pod
+        image: nginx           # which Docker image to run

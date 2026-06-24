@@ -1,0 +1,45 @@
+Vagrant.configure("2") do |config| #API version, always "2"
+
+  # Global settings go here
+  config.vm.box = "debian/bookworm64" #current stable
+  config.vm.provider "libvirt" do |lv|
+    lv.default_prefix = ""
+  end
+  #runs on all machines
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get upgrade -y
+    apt-get install -y curl
+    
+  SHELL
+
+  # First machine (Server)
+  config.vm.define "yel-boukS" do |server|
+    server.vm.hostname = "yel-boukS"
+    server.vm.network "private_network", ip: "192.168.56.110"
+    
+    server.vm.provider "libvirt" do |vb|
+      vb.memory = 1536
+      vb.cpus = 1
+      vb.machine_type = "pc"
+      vb.driver = "qemu"
+    end
+
+    server.vm.provision "shell", inline: <<-SHELL
+     # Server provisioning script:
+     #when token is not defined, it's automatically generated at /var/lib/rancher/k3s/server/node-token
+      curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" sh -s -
+      #makes the k3s config file readable by all users
+      while ! sudo kubectl get nodes > /dev/null 2>&1; do
+        echo "Waiting for k3s..."
+        sleep 5
+      done
+      chmod 644 /etc/rancher/k3s/k3s.yaml 
+      cat /var/lib/rancher/k3s/server/node-token > /vagrant/token
+      kubectl apply -f /vagrant/confs/apps_1.yaml
+      kubectl apply -f /vagrant/confs/apps_2.yaml
+      kubectl apply -f /vagrant/confs/apps_3.yaml
+    SHELL
+  end
+
+end
