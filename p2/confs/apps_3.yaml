@@ -15,3 +15,6 @@ spec:                      # everything under here is "how this Deployment shoul
       containers:
       - name: app3            # name of the container inside the pod
         image: nginx           # which Docker image to run
+        command: ["/bin/sh", "-c"]
+        args:
+        - echo "Hello from app3" > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'
