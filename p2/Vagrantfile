@@ -46,10 +46,10 @@ Vagrant.configure("2") do |config| #API version, always "2"
       kubectl apply -f /vagrant/confs/apps_1.yaml
       kubectl apply -f /vagrant/confs/apps_2.yaml
       kubectl apply -f /vagrant/confs/apps_3.yaml
-      kubectl apply -f /vagrant/confs/service_1.yaml
-      kubectl apply -f /vagrant/confs/service_2.yaml
-      kubectl apply -f /vagrant/confs/service_3.yaml
-      kubectl apply -f /vagrant/confs/ingress_conf.yaml
+      kubectl apply -f /vagrant/confs/service1.yaml
+      kubectl apply -f /vagrant/confs/service2.yaml
+      kubectl apply -f /vagrant/confs/service3.yaml
+      kubectl apply -f /vagrant/confs/ingress.yaml
     SHELL
   end
 
