@@ -30,4 +30,5 @@ A couple of habits worth building alongside these:
 Tab completion saves real typing once resource names get long (nginx-test-6ff8854996-9tnml is not fun to type twice). If you're not already using it:
 bash  echo 'source <(kubectl completion bash)' >> ~/.bashrc
 watch pairs well with get, for exactly the kind of "is it done yet" loop you were doing manually earlier:
-bash  watch sudo kubectl get pods
+bash  watch sudo kubectl get podsexport KUBECONFIG=/home/yel-bouk/.config/k3d/kubeconfig-my-cluster.yaml
+k3d kubeconfig merge my-cluster --kubeconfig-switch-context
