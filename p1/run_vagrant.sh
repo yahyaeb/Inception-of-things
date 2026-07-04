@@ -12,3 +12,4 @@ rm -rf .vagrant/
 
 # Start
 vagrant up --provider=libvirt
+echo "Done! Run 'vagrant ssh yel-boukS' to connect"
