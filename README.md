@@ -97,6 +97,116 @@ Argo CD has both a web UI and can be fully configured via CLI/YAML, making it sc
 
 ---
 
+## Prerequisites
+
+### For P1 and P2 (Vagrant + K3s)
+```
+- Vagrant
+- libvirt + QEMU
+- vagrant-libvirt plugin
+```
+
+Install on Ubuntu/Debian:
+```bash
+sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-dev
+vagrant plugin install vagrant-libvirt
+sudo usermod -aG libvirt $USER
+newgrp libvirt
+```
+
+### For P3 (K3d + Argo CD)
+```
+- Docker
+- kubectl
+- K3d
+```
+
+Everything is handled automatically by the install script!
+
+---
+
+## How to Run
+
+### Part 1 — K3s Cluster (Server + Agent)
+```bash
+cd p1/
+
+# Start fresh (clean + launch)
+./run_vagrant.sh
+
+# Or manually:
+vagrant up --provider=libvirt
+
+# SSH into server
+vagrant ssh yel-boukS
+
+# Verify cluster
+kubectl get nodes -o wide
+
+# Stop VMs
+vagrant halt
+
+# Destroy VMs
+vagrant destroy -f
+# or
+./clean.sh
+```
+
+### Part 2 — K3s + Three Applications
+```bash
+cd p2/
+
+# Start fresh
+./run_vagrant.sh
+
+# SSH into server
+vagrant ssh yel-boukS
+
+# Verify apps running
+kubectl get pods
+kubectl get ingress
+
+# Test routing
+curl -H "Host:app1.com" http://192.168.56.110
+curl -H "Host:app2.com" http://192.168.56.110
+curl http://192.168.56.110
+
+# Stop/destroy
+vagrant halt
+# or
+./clean.sh
+```
+
+### Part 3 — K3d + Argo CD (GitOps)
+```bash
+cd p3/
+
+# Install everything from scratch
+./scripts/install.sh
+
+# Access Argo CD UI
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Open https://localhost:8080
+# username: admin
+# password:
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d && echo
+
+# Access the app
+kubectl port-forward svc/wil-playground 8888:8888 -n dev
+curl http://localhost:8888/
+
+# Test GitOps (update v1 → v2)
+# Edit manifests/deployment.yaml in yel-bouk-argocd repo
+# Change image tag from v1 to v2
+# git push → Argo CD auto-deploys!
+
+# Cleanup
+./scripts/clean.sh
+```
+
+---
+
 ## Author
 
-**yel-bouk** — École 42 Nice
+**Yahia Elboukili**
