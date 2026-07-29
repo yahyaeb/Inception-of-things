@@ -99,7 +99,7 @@ set -e
 
 # Git commit from https://github.com/docker/docker-install when
 # the script was uploaded (Should only be modified by upload job):
-SCRIPT_COMMIT_SHA="60d4787004fea99ea3b3b4a92836144c3119ad33"
+SCRIPT_COMMIT_SHA="5ce20f2eef3615d08fea941eda5a109e949e8ebf"
 
 # strip "v" prefix if present
 VERSION="${VERSION#v}"
@@ -587,6 +587,7 @@ do_install() {
 			fi
 
 			pkg_version=""
+			cli_pkg_version=""
 			if [ -n "$VERSION" ]; then
 				if is_dry_run; then
 					echo "# WARNING: VERSION pinning is not supported in DRY_RUN"
@@ -594,42 +595,50 @@ do_install() {
 					# Will work for incomplete versions IE (17.12), but may not actually grab the "latest" if in the test channel
 					pkg_pattern="$(echo "$VERSION" | sed 's/-ce-/~ce~.*/g' | sed 's/-/.*/g')"
 					search_command="apt-cache madison docker-ce | grep '$pkg_pattern' | head -1 | awk '{\$1=\$1};1' | cut -d' ' -f 3"
-					pkg_version="$($sh_c "$search_command")"
 					echo "INFO: Searching repository for VERSION '$VERSION'"
 					echo "INFO: $search_command"
+					pkg_version="$($sh_c "$search_command")"
 					if [ -z "$pkg_version" ]; then
 						echo
 						echo "ERROR: '$VERSION' not found amongst apt-cache madison results"
 						echo
 						exit 1
 					fi
-					if version_gte "18.09"; then
-							search_command="apt-cache madison docker-ce-cli | grep '$pkg_pattern' | head -1 | awk '{\$1=\$1};1' | cut -d' ' -f 3"
-							echo "INFO: $search_command"
-							cli_pkg_version="=$($sh_c "$search_command")"
-					fi
 					pkg_version="=$pkg_version"
+
+					if version_gte "18.09"; then
+						search_command="apt-cache madison docker-ce-cli | grep '$pkg_pattern' | head -1 | awk '{\$1=\$1};1' | cut -d' ' -f 3"
+						echo "INFO: $search_command"
+						cli_pkg_version="$($sh_c "$search_command")"
+						if [ -n "$cli_pkg_version" ]; then
+							cli_pkg_version="=$cli_pkg_version"
+						fi
+					fi
 				fi
 			fi
 			(
-				pkgs="docker-ce${pkg_version%=}"
+				pkgs="docker-ce${pkg_version}"
 				if version_gte "18.09"; then
-						# older versions didn't ship the cli and containerd as separate packages
-						pkgs="$pkgs docker-ce-cli${cli_pkg_version%=} containerd.io"
+					# older versions didn't ship the cli and containerd as separate packages
+					pkgs="$pkgs docker-ce-cli${cli_pkg_version} containerd.io"
 				fi
 				if version_gte "20.10"; then
-						pkgs="$pkgs docker-compose-plugin docker-ce-rootless-extras$pkg_version"
+					pkgs="$pkgs docker-compose-plugin docker-ce-rootless-extras$pkg_version"
 				fi
 				if version_gte "23.0"; then
-						pkgs="$pkgs docker-buildx-plugin"
+					pkgs="$pkgs docker-buildx-plugin"
 				fi
 				if version_gte "28.2"; then
-						pkgs="$pkgs docker-model-plugin"
+					pkgs="$pkgs docker-model-plugin"
 				fi
 				if ! is_dry_run; then
 					set -x
 				fi
-				$sh_c "DEBIAN_FRONTEND=noninteractive apt-get -y -qq install $pkgs >/dev/null"
+				apt_flags="-y -qq"
+				if [ -n "$pkg_version" ]; then
+					apt_flags="$apt_flags --allow-downgrades"
+				fi
+				$sh_c "DEBIAN_FRONTEND=noninteractive apt-get $apt_flags install $pkgs >/dev/null"
 			)
 			if [ "$NO_AUTOSTART" != "1" ]; then
 				start_docker_daemon
@@ -638,10 +647,6 @@ do_install() {
 			exit 0
 			;;
 		centos|fedora|rhel|rocky)
-			if [ "$(uname -m)" = "s390x" ]; then
-				echo "Effective v27.5, please consult RHEL distro statement for s390x support."
-				exit 1
-			fi
 			repo_file_url="$DOWNLOAD_URL/linux/$lsb_dist/$REPO_FILE"
 			(
 				if ! is_dry_run; then
@@ -684,6 +689,7 @@ do_install() {
 			fi
 
 			pkg_version=""
+			cli_pkg_version=""
 			if command_exists dnf; then
 				pkg_manager="dnf"
 				pkg_manager_flags="-y -q --best"
@@ -702,22 +708,23 @@ do_install() {
 					fi
 					pkg_pattern="$(echo "$VERSION" | sed 's/-ce-/\\\\.ce.*/g' | sed 's/-/.*/g').*$pkg_suffix"
 					search_command="$pkg_manager list --showduplicates docker-ce | grep '$pkg_pattern' | tail -1 | awk '{print \$2}'"
-					pkg_version="$($sh_c "$search_command")"
 					echo "INFO: Searching repository for VERSION '$VERSION'"
 					echo "INFO: $search_command"
+					pkg_version="$($sh_c "$search_command")"
 					if [ -z "$pkg_version" ]; then
 						echo
 						echo "ERROR: '$VERSION' not found amongst $pkg_manager list results"
 						echo
 						exit 1
 					fi
+					# Cut out the epoch and prefix with a '-'
+					pkg_version="-$(echo "$pkg_version" | cut -d':' -f 2)"
+
 					if version_gte "18.09"; then
 						# older versions don't support a cli package
 						search_command="$pkg_manager list --showduplicates docker-ce-cli | grep '$pkg_pattern' | tail -1 | awk '{print \$2}'"
 						cli_pkg_version="$($sh_c "$search_command" | cut -d':' -f 2)"
 					fi
-					# Cut out the epoch and prefix with a '-'
-					pkg_version="-$(echo "$pkg_version" | cut -d':' -f 2)"
 				fi
 			fi
 			(

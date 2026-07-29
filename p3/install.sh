@@ -24,6 +24,7 @@ echo "K3d installed!"
 echo "Creating cluster: my-cluster..."
 k3d cluster create my-cluster \
   --k3s-arg "--disable=traefik@server:0"
+#necessary so that kubectl can communicate with the k3s API server.
 k3d kubeconfig merge my-cluster --kubeconfig-switch-context
 echo "Cluster created!"
 
@@ -33,9 +34,6 @@ echo "Creating namespaces..."
 kubectl create namespace argocd
 kubectl create namespace dev
 echo "Namespaces created!"
-
-k3d kubeconfig merge my-cluster --kubeconfig-switch-context
-export KUBECONFIG=$(k3d kubeconfig write my-cluster)
 
 # 6. Install Argo CD
 echo "Installing Argo CD..."
